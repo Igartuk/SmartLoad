@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SmartLoad.Api/SmartLoad.Api.csproj" Id="b0ffc15f-d6b1-43b0-a11f-23864970f303" />
+    <Project Path="src/SmartLoad.Application/SmartLoad.Application.csproj" Id="e15285e4-0c89-40e6-ac48-c8af0da657e3" />
+    <Project Path="src/SmartLoad.Domain/SmartLoad.Domain.csproj" Id="fbc30e07-45d2-45c6-8c0a-73becd7c19a0" />
+    <Project Path="src/SmartLoad.Infrastructure/SmartLoad.Infrastructure.csproj" Id="8de0b2d2-866c-4b1b-bc5d-99e3f564265f" />
+  </Folder>
+</Solution>
