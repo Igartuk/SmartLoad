@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using SmartLoad.Api.Endpoints;
 using SmartLoad.Application.Packing.Commands;
+using SmartLoad.Infrastructure.Persistence;
 using static SmartLoad.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,5 +34,9 @@ app.UseCors("AllowClient");
 app.UseHttpsRedirection();
 
 app.MapPackingEndpoints();
-
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 app.Run();

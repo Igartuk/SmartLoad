@@ -42,7 +42,7 @@ export interface PackingResponse {
   unpackedItems: any[];
 }
 
-const API_BASE_URL = "https://localhost:7039/api/packing";
+const API_BASE_URL = "http://localhost:8080/api/packing";
 
 export async function calculatePacking(
   request: PackingRequest,

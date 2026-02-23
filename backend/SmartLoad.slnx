@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../docker/.env" />
+    <File Path="../docker/.env.development" />
+    <File Path="../docker/backend.Dockerfile" />
+    <File Path="../docker/docker-compose.yml" />
+    <File Path="../docker/frontend.Dockerfile" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/SmartLoad.Api/SmartLoad.Api.csproj" Id="b0ffc15f-d6b1-43b0-a11f-23864970f303" />
     <Project Path="src/SmartLoad.Application/SmartLoad.Application.csproj" Id="e15285e4-0c89-40e6-ac48-c8af0da657e3" />
