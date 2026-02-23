@@ -52,7 +52,7 @@ namespace SmartLoad.Application.Packing.Commands
 
             var loadPlan = _packingStrategy.Calculate(vehicle, domainBoxes);
 
-            await _repository.SaveAsync(loadPlan);
+             await _repository.SaveAsync(loadPlan);
 
             return loadPlan.ToResponse();
         }

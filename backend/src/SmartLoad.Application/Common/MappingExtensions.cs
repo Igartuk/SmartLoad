@@ -17,7 +17,7 @@ namespace SmartLoad.Application.Common
                 plan.TotalVolumeUtilization,
                 plan.PackedItems.Select(pi => new PackedItemDto(
                     pi.BoxId,
-                    "Box", // In a real app, join with the Box name
+                    pi.Name,
                     pi.Position.X, pi.Position.Y, pi.Position.Z,
                     pi.OrientedDimensions.Width, pi.OrientedDimensions.Height, pi.OrientedDimensions.Depth,
                     pi.Rotation.ToString()

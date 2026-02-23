@@ -5,6 +5,7 @@ namespace SmartLoad.Domain.ValueObjects
 {
     public record PackedItem(
     Guid BoxId,
+    string Name,
     Position Position,
     Dimensions OrientedDimensions,
     RotationAxis Rotation,

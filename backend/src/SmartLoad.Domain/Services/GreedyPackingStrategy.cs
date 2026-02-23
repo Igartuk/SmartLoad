@@ -61,6 +61,7 @@ namespace SmartLoad.Domain.Services
                     {
                         result = new PackedItem(
                             box.Id,
+                            box.Name,
                             point,
                             orientedDim,
                             axis,
