@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SmartLoad.Application.Interfaces;
+using SmartLoad.Application.Services;
 using SmartLoad.Domain.Services;
 using SmartLoad.Infrastructure.Persistence;
 using SmartLoad.Infrastructure.Persistence.Repositories;
@@ -21,6 +22,7 @@ namespace SmartLoad.Infrastructure
             services.AddScoped<ILoadPlanRepository, LoadPlanRepository>();
 
             services.AddScoped<IPackingStrategy, GreedyPackingStrategy>();
+            services.AddScoped<UrlShortenerService>();
 
             return services;
         }

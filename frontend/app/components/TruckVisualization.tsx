@@ -232,41 +232,41 @@ function Box({
   );
 }
 
-function StatsDisplay({
-  volumeUtilization,
-  boxCount,
-}: {
-  volumeUtilization: number;
-  boxCount: number;
-}) {
-  return (
-    <div className="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg">
-      <h3 className="font-bold text-lg mb-2">📊 Packing Statistics</h3>
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <span className="text-gray-600">Volume Utilization:</span>
-          <span className="font-semibold text-green-600">
-            {volumeUtilization.toFixed(2)}%
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">Boxes Packed:</span>
-          <span className="font-semibold text-blue-600">{boxCount}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">Efficiency:</span>
-          <span className="font-semibold">
-            {volumeUtilization > 80
-              ? "🟢 Excellent"
-              : volumeUtilization > 60
-                ? "🟡 Good"
-                : "🔴 Fair"}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+// function StatsDisplay({
+//   volumeUtilization,
+//   boxCount,
+// }: {
+//   volumeUtilization: number;
+//   boxCount: number;
+// }) {
+//   return (
+//     <div className="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg">
+//       <h3 className="font-bold text-lg mb-2">📊 Packing Statistics</h3>
+//       <div className="space-y-2">
+//         <div className="flex justify-between">
+//           <span className="text-gray-600">Volume Utilization:</span>
+//           <span className="font-semibold text-green-600">
+//             {volumeUtilization.toFixed(2)}%
+//           </span>
+//         </div>
+//         <div className="flex justify-between">
+//           <span className="text-gray-600">Boxes Packed:</span>
+//           <span className="font-semibold text-blue-600">{boxCount}</span>
+//         </div>
+//         <div className="flex justify-between">
+//           <span className="text-gray-600">Efficiency:</span>
+//           <span className="font-semibold">
+//             {volumeUtilization > 80
+//               ? "🟢 Excellent"
+//               : volumeUtilization > 60
+//                 ? "🟡 Good"
+//                 : "🔴 Fair"}
+//           </span>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
 function ControlsHint() {
   return (
@@ -305,10 +305,10 @@ export default function TruckVisualization({
 
   return (
     <div className="w-full h-full bg-gray-100 relative">
-      <StatsDisplay
+      {/* <StatsDisplay
         volumeUtilization={volumeUtilization}
         boxCount={packedItems.length}
-      />
+      /> */}
       <ControlsHint />
 
       <Canvas camera={{ position: [15, 20, 25], fov: 50 }} shadows>
@@ -353,7 +353,7 @@ export default function TruckVisualization({
           enableZoom={true}
           enableRotate={true}
           minDistance={5}
-          maxDistance={100}
+          maxDistance={200}
           autoRotate={false}
         />
 
@@ -368,7 +368,7 @@ export default function TruckVisualization({
         </mesh>
       </Canvas>
 
-      {/* Legend/Key */}
+      {/* Legend/Key
       <div className="absolute bottom-4 right-4 bg-white p-3 rounded-lg shadow-lg">
         <p className="text-sm font-medium mb-2">🎨 Color Legend</p>
         <div className="space-y-1 text-xs">
@@ -388,7 +388,7 @@ export default function TruckVisualization({
         <p className="text-xs text-gray-500 mt-2">
           Each box type has a unique color based on its name
         </p>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -1,21 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import PackingForm from "./components/PackingForm";
-import TruckVisualization from "./components/TruckVisualization";
-import { PackingResponse } from "./services/api";
+import { calculatePacking } from "./services/api";
 
 export default function Home() {
-  const [result, setResult] = useState<PackingResponse | null>(null);
-  const [vehicleData, setVehicleData] = useState<{
-    width: number;
-    height: number;
-    depth: number;
-  } | null>(null);
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFormResult = (data: {
-    result: PackingResponse;
+  const handleFormResult = async (data: {
+    result: { success: boolean; url: string };
     vehicle: {
       width: number;
       height: number;
@@ -24,51 +20,53 @@ export default function Home() {
       name: string;
       templateType: string;
     };
+    boxes: any[];
   }) => {
-    setResult(data.result);
-    setVehicleData({
-      width: data.vehicle.width,
-      height: data.vehicle.height,
-      depth: data.vehicle.depth,
-    });
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // The PackingForm already called the API, just handle the result
+      if (data.result.success && data.result.url) {
+        // Redirect to the packing result page with the short URL
+        router.push(`${data.result.url}`);
+      } else {
+        throw new Error("Failed to get packing URL");
+      }
+    } catch (err) {
+      console.error("Error submitting packing form:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to submit packing form",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <div className="flex h-screen">
-        {/* Form on the left side - takes about 30% of screen width */}
-        <div className="w-full lg:w-1/3 bg-white shadow-lg overflow-y-auto p-6">
-          <PackingForm onResult={handleFormResult} />
-        </div>
+        {/* Form takes full width on initial page */}
+        <div className="w-full bg-white shadow-lg overflow-y-auto p-6">
+          <h1 className="text-2xl font-bold mb-6 text-gray-800">
+            SmartLoad - Truck Packing Calculator
+          </h1>
 
-        {/* Visualization on the right side - takes about 70% of screen width */}
-        <div className="w-full lg:w-2/3 bg-gray-100 relative">
-          {result ? (
-            <div className="h-full">
-              <TruckVisualization
-                vehicle={{
-                  width: vehicleData?.width || 100,
-                  height: vehicleData?.height || 100,
-                  depth: vehicleData?.depth || 100,
-                }}
-                packedItems={result.packedItems || []}
-                volumeUtilization={result.volumeUtilization || 0}
-              />
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
+              Error: {error}
             </div>
-          ) : (
-            <div className="h-full flex items-center justify-center p-8">
-              <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800">
-                  Welcome to SmartLoad
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Submit the form on the left to see 3D visualization of your
-                  truck packing
-                </p>
-                <div className="text-blue-500 text-sm">
-                  📦 Optimize your cargo loading with our intelligent packing
-                  algorithm
-                </div>
+          )}
+
+          <PackingForm onResult={handleFormResult} shouldCallApi={true} />
+
+          {isLoading && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <p className="text-blue-700">
+                Processing your packing request...
+              </p>
+              <div className="mt-2 h-1 w-full bg-blue-200 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 rounded-full animate-pulse"></div>
               </div>
             </div>
           )}

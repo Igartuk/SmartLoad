@@ -27,5 +27,30 @@ namespace SmartLoad.Application.Common
                 )).ToList()
             );
         }
+
+        public static LoadingPlanResponse ToLoadingPlanResponse(this LoadPlan plan)
+        {
+            return new LoadingPlanResponse(
+                plan.Url ?? string.Empty,
+                plan.TotalVolumeUtilization,
+                new VehicleDto(
+                    plan.Vehicle.InnerDimensions.Width,
+                    plan.Vehicle.InnerDimensions.Height,
+                    plan.Vehicle.InnerDimensions.Depth
+                ),
+                plan.PackedItems.Select(pi => new PackedItemDto(
+                    pi.BoxId,
+                    pi.Name,
+                    pi.Position.X, pi.Position.Y, pi.Position.Z,
+                    pi.OrientedDimensions.Width, pi.OrientedDimensions.Height, pi.OrientedDimensions.Depth,
+                    pi.Rotation.ToString()
+                )).ToList(),
+                plan.UnpackedItems.Select(u => new BoxDto(
+                    u.Name, u.Dimensions.Width, u.Dimensions.Height, u.Dimensions.Depth
+                )).ToList(),
+                plan.OriginalRequest,
+                plan.UnpackedItems.Count
+            );
+        }
     }
 }

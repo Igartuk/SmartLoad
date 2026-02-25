@@ -5,16 +5,38 @@ import { calculatePacking } from "../services/api";
 
 export default function PackingForm({
   onResult,
+  initialVehicle,
+  initialBoxes,
+  shouldCallApi = true,
 }: {
   onResult: (result: any) => void;
+  initialVehicle?: {
+    name: string;
+    templateType: string;
+    width: number;
+    height: number;
+    depth: number;
+    maxPayload: number;
+  };
+  initialBoxes?: {
+    name: string;
+    width: number;
+    height: number;
+    depth: number;
+    weight: number;
+    quantity: number;
+    isStackable: boolean;
+    isFragile: boolean;
+  }[];
+  shouldCallApi?: boolean;
 }) {
   const [vehicle, setVehicle] = useState({
-    name: "Truck",
-    templateType: "custom",
-    width: 100,
-    height: 100,
-    depth: 100,
-    maxPayload: 1000,
+    name: initialVehicle?.name || "Truck",
+    templateType: initialVehicle?.templateType || "custom",
+    width: initialVehicle?.width || 100,
+    height: initialVehicle?.height || 100,
+    depth: initialVehicle?.depth || 100,
+    maxPayload: initialVehicle?.maxPayload || 1000,
   });
 
   const truckPresets = [
@@ -52,18 +74,22 @@ export default function PackingForm({
     });
   };
 
-  const [boxes, setBoxes] = useState([
-    {
-      name: "Box 1",
-      width: 10,
-      height: 10,
-      depth: 10,
-      weight: 1,
-      quantity: 10,
-      isStackable: true,
-      isFragile: false,
-    },
-  ]);
+  const [boxes, setBoxes] = useState(
+    initialBoxes && initialBoxes.length > 0
+      ? initialBoxes
+      : [
+          {
+            name: "Box 1",
+            width: 10,
+            height: 10,
+            depth: 10,
+            weight: 1,
+            quantity: 10,
+            isStackable: true,
+            isFragile: false,
+          },
+        ],
+  );
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,8 +160,13 @@ export default function PackingForm({
     setError(null);
 
     try {
-      const result = await calculatePacking({ vehicle, boxes });
-      onResult({ result, vehicle });
+      if (shouldCallApi) {
+        const result = await calculatePacking({ vehicle, boxes });
+        onResult({ result, vehicle, boxes });
+      } else {
+        // Just pass the form data to parent component without calling API
+        onResult({ vehicle, boxes });
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to calculate packing",

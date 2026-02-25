@@ -15,9 +15,24 @@ namespace SmartLoad.Infrastructure.Persistence.Repositories
             return plan ?? throw new KeyNotFoundException($"LoadPlan {id} not found.");
         }
 
+        public async Task<LoadPlan> GetByUrlAsync(string url)
+        {
+            var plan = await context.LoadPlans
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Url == url);
+
+            return plan ?? throw new KeyNotFoundException($"LoadPlan with short URL {url} not found.");
+        }
+
         public async Task SaveAsync(LoadPlan plan)
         {
             await context.LoadPlans.AddAsync(plan);
+            await context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(LoadPlan plan)
+        {
+            context.LoadPlans.Update(plan);
             await context.SaveChangesAsync();
         }
     }
