@@ -55,9 +55,9 @@ export interface PackingResultWithPlan {
 
 export interface UnpackedBox {
   name: string;
-  width: number;
-  height: number;
-  depth: number;
+  w: number;
+  h: number;
+  d: number;
 }
 
 export interface LoadingPlanResponse {
@@ -77,7 +77,7 @@ export interface LoadingPlanResponse {
 
 import FetchWrapper from "./FetchWrapper";
 
-const API_BASE_URL = "https://localhost:7039/api/packing";
+const API_BASE_URL = "http://localhost:8080/api/packing";
 
 export async function calculatePacking(
   request: PackingRequest,

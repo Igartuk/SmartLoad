@@ -1,33 +1,130 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Text, Html } from "@react-three/drei";
+import { useState, useEffect, useMemo } from "react";
+import { Canvas } from "@react-three/fiber";
+import {
+  OrbitControls,
+  Text,
+  PerspectiveCamera,
+  Environment,
+  ContactShadows,
+} from "@react-three/drei";
 import * as THREE from "three";
 
+// --- Constants ---
+const MM_TO_M = 0.001;
+const CHASSIS_HEIGHT = 1.1;
+const CABIN_LENGTH = 2.8; // Length of the tractor unit
+const HITCH_GAP = 0.6; // Physical gap between trailer wall and cabin back
+
+// --- Types ---
 interface PackedItem {
   boxId: string;
   name: string;
   x: number;
   y: number;
-  z: number;
+  z: number; // mm
   w: number;
   h: number;
-  d: number;
-  rotation: string;
+  d: number; // mm
 }
 
 interface TruckVisualizationProps {
-  vehicle: {
-    width: number;
-    height: number;
-    depth: number;
-  };
+  vehicle: { width: number; height: number; depth: number };
   packedItems: PackedItem[];
-  volumeUtilization: number;
+  volumeUtilization?: number;
 }
 
-function Truck({
+// --- Components ---
+
+function Wheel({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.48, 0.48, 0.4, 32]} />
+        <meshStandardMaterial color="#111" roughness={1} />
+      </mesh>
+      <mesh rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.3, 0.3, 0.42, 16]} />
+        <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+function TractorUnit({
+  truckWidth,
+  truckDepth,
+}: {
+  truckWidth: number;
+  truckDepth: number;
+}) {
+  const w = truckWidth * MM_TO_M;
+  const d = truckDepth * MM_TO_M;
+
+  // Calculate the front edge of the trailer
+  const trailerFrontZ = d / 2;
+  // Position the cabin center beyond the front edge + gap + half cabin length
+  const cabinCenterZ = trailerFrontZ + HITCH_GAP + CABIN_LENGTH / 2;
+
+  return (
+    <group position={[0, 0, cabinCenterZ]}>
+      {/* Lower Engine/Chassis Block */}
+      <mesh position={[0, 0.6, 0]}>
+        <boxGeometry args={[w * 1.05, 1.0, CABIN_LENGTH]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
+      </mesh>
+
+      {/* Driver Cab */}
+      <mesh position={[0, 2.1, -0.2]}>
+        <boxGeometry args={[w, 2.0, CABIN_LENGTH * 0.7]} />
+        <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
+      </mesh>
+
+      {/* Roof Deflector - Sloped to meet trailer height */}
+      <mesh position={[0, 3.4, -0.4]} rotation={[-0.4, 0, 0]}>
+        <boxGeometry args={[w * 0.95, 0.8, 1.5]} />
+        <meshStandardMaterial color="#1e293b" />
+      </mesh>
+
+      {/* Windshield - Facing Front (+Z) */}
+      <mesh position={[0, 2.4, 0.8]}>
+        <boxGeometry args={[w * 0.9, 1.1, 0.05]} />
+        <meshStandardMaterial color="#000" transparent opacity={0.8} />
+      </mesh>
+
+      {/* Front Grille Area */}
+      <mesh position={[0, 1.0, CABIN_LENGTH / 2 + 0.01]}>
+        <boxGeometry args={[w * 0.7, 0.8, 0.05]} />
+        <meshStandardMaterial color="#0f172a" />
+      </mesh>
+
+      {/* Headlights */}
+      <mesh position={[w * 0.35, 0.5, CABIN_LENGTH / 2 + 0.02]}>
+        <planeGeometry args={[0.4, 0.2]} />
+        <meshStandardMaterial
+          color="#fff"
+          emissive="#fff"
+          emissiveIntensity={2}
+        />
+      </mesh>
+      <mesh position={[-w * 0.35, 0.5, CABIN_LENGTH / 2 + 0.02]}>
+        <planeGeometry args={[0.4, 0.2]} />
+        <meshStandardMaterial
+          color="#fff"
+          emissive="#fff"
+          emissiveIntensity={2}
+        />
+      </mesh>
+
+      {/* Front Wheels (Steer Axle) */}
+      <Wheel position={[w / 2, 0.5, 0.8]} />
+      <Wheel position={[-w / 2, 0.5, 0.8]} />
+    </group>
+  );
+}
+
+function Trailer({
   width,
   height,
   depth,
@@ -36,359 +133,177 @@ function Truck({
   height: number;
   depth: number;
 }) {
-  // Scale factors to make visualization more reasonable
-  const scaleX = 0.1;
-  const scaleY = 0.1;
-  const scaleZ = 0.1;
+  const w = width * MM_TO_M;
+  const h = height * MM_TO_M;
+  const d = depth * MM_TO_M;
 
   return (
     <group>
-      {/* Truck container with wireframe for visibility */}
-      <mesh position={[0, (height * scaleY) / 2, 0]}>
-        <boxGeometry args={[width * scaleX, height * scaleY, depth * scaleZ]} />
+      {/* 1. Trailer Floor */}
+      <mesh position={[0, CHASSIS_HEIGHT - 0.05, 0]}>
+        <boxGeometry args={[w, 0.1, d]} />
+        <meshStandardMaterial color="#334155" />
+      </mesh>
+
+      {/* 2. Ghost Trailer (Side Walls) */}
+      <mesh position={[0, CHASSIS_HEIGHT + h / 2, 0]}>
+        <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial
-          color="#e5e7eb"
+          color="#cbd5e1"
           transparent
-          opacity={0.3}
-          wireframe={true}
-          wireframeLinewidth={2}
+          opacity={0.1}
+          side={THREE.DoubleSide}
         />
       </mesh>
 
-      {/* Truck base */}
-      <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[width * scaleX * 1.1, depth * scaleZ * 1.1]} />
-        <meshStandardMaterial color="#f3f4f6" side={THREE.DoubleSide} />
-      </mesh>
-
-      {/* Truck label */}
-      <Html position={[0, (height * scaleY) / 2 + 1, 0]} center>
-        <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-          Truck: {width} × {height} × {depth}
-        </div>
-      </Html>
-    </group>
-  );
-}
-
-/**
- * Generate a deterministic color for a box based on its name
- * Uses a hash function to create consistent colors for the same names
- */
-function getColorForBoxName(name: string): string {
-  // Simple hash function to convert string to number
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  // Convert hash to HSL values for better visual distinction
-  const hue = Math.abs(hash) % 360; // 0-360 degrees for full color spectrum
-  const saturation = 70 + (Math.abs(hash) % 20); // 70-90% saturation
-  const lightness = 40 + (Math.abs(hash) % 15); // 40-55% lightness
-
-  // Convert HSL to RGB, then to hex
-  const h = hue / 360;
-  const s = saturation / 100;
-  const l = lightness / 100;
-
-  let r, g, b;
-
-  if (s === 0) {
-    r = g = b = l; // achromatic
-  } else {
-    const hue2rgb = (p: number, q: number, t: number) => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
-  }
-
-  // Convert RGB to hex
-  const toHex = (x: number) => {
-    const hex = Math.round(x * 255).toString(16);
-    return hex.length === 1 ? "0" + hex : hex;
-  };
-
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-
-/**
- * Generate a darker border color based on box name
- */
-function getBorderColorForBoxName(name: string): string {
-  // Simple hash function to convert string to number
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  // Convert hash to HSL values for border (darker version)
-  const hue = Math.abs(hash) % 360; // Same hue for consistency
-  const saturation = 80 + (Math.abs(hash) % 15); // 80-95% saturation
-  const lightness = 25 + (Math.abs(hash) % 10); // 25-35% lightness (darker)
-
-  // Convert HSL to RGB, then to hex
-  const h = hue / 360;
-  const s = saturation / 100;
-  const l = lightness / 100;
-
-  let r, g, b;
-
-  if (s === 0) {
-    r = g = b = l; // achromatic
-  } else {
-    const hue2rgb = (p: number, q: number, t: number) => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
-  }
-
-  // Convert RGB to hex
-  const toHex = (x: number) => {
-    const hex = Math.round(x * 255).toString(16);
-    return hex.length === 1 ? "0" + hex : hex;
-  };
-
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-
-function Box({
-  item,
-  truckWidth,
-  truckHeight,
-  truckDepth,
-}: {
-  item: PackedItem;
-  truckWidth: number;
-  truckHeight: number;
-  truckDepth: number;
-}) {
-  // Scale factors to make visualization more reasonable
-  const scaleX = 0.1;
-  const scaleY = 0.1;
-  const scaleZ = 0.1;
-
-  // Position the box correctly within the truck
-  const x = (item.x + item.w / 2 - truckWidth / 2) * scaleX;
-  const y = (item.y + item.h / 2) * scaleY;
-  const z = (item.z + item.d / 2 - truckDepth / 2) * scaleZ;
-
-  // Generate color based on box name for visual distinction
-  const boxColor = getColorForBoxName(item.name);
-  const borderColor = getBorderColorForBoxName(item.name);
-
-  // Calculate box dimensions
-  const width = item.w * scaleX;
-  const height = item.h * scaleY;
-  const depth = item.d * scaleZ;
-
-  return (
-    <group position={[x, y, z]}>
-      {/* Main box with border effect */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[width, height, depth]} />
-        <meshStandardMaterial color={boxColor} />
-      </mesh>
-
-      {/* Border edges */}
-      <lineSegments>
-        <edgesGeometry args={[new THREE.BoxGeometry(width, height, depth)]} />
-        <lineBasicMaterial color={borderColor} linewidth={2} />
+      {/* 3. Trailer Edges */}
+      <lineSegments position={[0, CHASSIS_HEIGHT + h / 2, 0]}>
+        <edgesGeometry args={[new THREE.BoxGeometry(w, h, d)]} />
+        <lineBasicMaterial color="#475569" transparent opacity={0.5} />
       </lineSegments>
 
-      {/* Name on the front face of the box */}
-      <Text
-        position={[0, 0, depth / 2 + 0.1]} // Position on the front face
-        fontSize={0.4}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.03}
-        outlineColor="black"
-      >
-        {item.name}
-      </Text>
+      {/* 4. Rear Wheels (Triple Axle) */}
+      <group position={[0, 0.5, 0]}>
+        {[-1.1, 0, 1.1].map((z, i) => (
+          <group key={i}>
+            <Wheel position={[w / 2, 0, -d / 2 + 2.5 + z]} />
+            <Wheel position={[-w / 2, 0, -d / 2 + 2.5 + z]} />
+          </group>
+        ))}
+      </group>
     </group>
   );
 }
 
-// function StatsDisplay({
-//   volumeUtilization,
-//   boxCount,
-// }: {
-//   volumeUtilization: number;
-//   boxCount: number;
-// }) {
-//   return (
-//     <div className="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg">
-//       <h3 className="font-bold text-lg mb-2">📊 Packing Statistics</h3>
-//       <div className="space-y-2">
-//         <div className="flex justify-between">
-//           <span className="text-gray-600">Volume Utilization:</span>
-//           <span className="font-semibold text-green-600">
-//             {volumeUtilization.toFixed(2)}%
-//           </span>
-//         </div>
-//         <div className="flex justify-between">
-//           <span className="text-gray-600">Boxes Packed:</span>
-//           <span className="font-semibold text-blue-600">{boxCount}</span>
-//         </div>
-//         <div className="flex justify-between">
-//           <span className="text-gray-600">Efficiency:</span>
-//           <span className="font-semibold">
-//             {volumeUtilization > 80
-//               ? "🟢 Excellent"
-//               : volumeUtilization > 60
-//                 ? "🟡 Good"
-//                 : "🔴 Fair"}
-//           </span>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
+function ItemBox({
+  item,
+  truckW,
+  truckH,
+  truckD,
+}: {
+  item: PackedItem;
+  truckW: number;
+  truckH: number;
+  truckD: number;
+}) {
+  const w = item.w * MM_TO_M;
+  const h = item.h * MM_TO_M;
+  const d = item.d * MM_TO_M;
 
-function ControlsHint() {
+  // POSITIONAL LOGIC:
+  // Data: x=0, z=0 is Rear-Left-Bottom.
+  // Scene: Center of trailer is 0,0,0.
+  const posX = item.x * MM_TO_M + w / 2 - (truckW * MM_TO_M) / 2;
+  const posY = item.y * MM_TO_M + h / 2 + CHASSIS_HEIGHT;
+  const posZ = item.z * MM_TO_M + d / 2 - (truckD * MM_TO_M) / 2;
+
+  const color = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < item.name.length; i++)
+      hash = item.name.charCodeAt(i) + ((hash << 5) - hash);
+    return `hsl(${Math.abs(hash) % 360}, 60%, 50%)`;
+  }, [item.name]);
+
   return (
-    <div className="absolute bottom-4 left-4 bg-white p-3 rounded-lg shadow-lg">
-      <p className="text-sm text-gray-600">
-        📱 <strong>Controls:</strong> Drag to rotate, Scroll to zoom,
-        Right-click to pan
-      </p>
-    </div>
+    <group position={[posX, posY, posZ]}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[w, h, d]} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      <lineSegments>
+        <edgesGeometry args={[new THREE.BoxGeometry(w, h, d)]} />
+        <lineBasicMaterial color="black" transparent opacity={0.2} />
+      </lineSegments>
+      {w > 0.4 && (
+        <Text
+          position={[0, 0, d / 2 + 0.01]}
+          fontSize={0.12}
+          color="white"
+          maxWidth={w}
+        >
+          {item.name}
+        </Text>
+      )}
+    </group>
   );
 }
+
+// --- Main Visualization ---
 
 export default function TruckVisualization({
   vehicle,
   packedItems,
-  volumeUtilization,
+  volumeUtilization = 0,
 }: TruckVisualizationProps) {
   const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
+  if (!isClient)
     return (
-      <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-        <div className="animate-pulse">
-          <p className="text-gray-500">Loading 3D visualization...</p>
-          <p className="text-sm text-gray-400 mt-2">
-            Preparing truck and boxes...
-          </p>
-        </div>
-      </div>
+      <div className="w-full h-[600px] bg-slate-100 animate-pulse rounded-xl" />
     );
-  }
+
+  const truckLengthM = vehicle.depth * MM_TO_M;
+  const cameraPos: [number, number, number] = [
+    truckLengthM * 1.2,
+    truckLengthM * 0.6,
+    truckLengthM * 1.2,
+  ];
 
   return (
-    <div className="w-full h-full bg-gray-100 relative">
-      {/* <StatsDisplay
-        volumeUtilization={volumeUtilization}
-        boxCount={packedItems.length}
-      /> */}
-      <ControlsHint />
+    <div className="w-full h-[600px] bg-[#f8fafc] relative rounded-2xl overflow-hidden border border-slate-200 shadow-xl">
+      {/* Header Overlay */}
 
-      <Canvas camera={{ position: [15, 20, 25], fov: 50 }} shadows>
-        {/* Improved lighting for better visibility */}
-        <ambientLight intensity={0.8} />
-        <pointLight position={[10, 10, 10]} intensity={1.5} />
-        <directionalLight
-          position={[10, 20, 10]}
-          intensity={1}
-          castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
-        />
-        <hemisphereLight args={["#b1e1ff", "#f0f0f0", 0.5]} />
-
-        {/* Truck with boxes */}
-        <Truck
-          width={vehicle.width}
-          height={vehicle.height}
-          depth={vehicle.depth}
-        />
-
-        {packedItems.map((item) => (
-          <Box
-            key={item.boxId}
-            item={item}
-            truckWidth={vehicle.width}
-            truckHeight={vehicle.height}
-            truckDepth={vehicle.depth}
-          />
-        ))}
-
-        {/* Grid and axes for reference */}
-        <gridHelper
-          args={[Math.max(vehicle.width, vehicle.depth) * 0.2, 20]}
-          position={[0, -0.1, 0]}
-        />
-        <axesHelper args={[5]} />
-
+      <Canvas shadows>
+        <PerspectiveCamera makeDefault position={cameraPos} fov={30} />
         <OrbitControls
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          minDistance={5}
-          maxDistance={200}
-          autoRotate={false}
+          makeDefault
+          enableDamping
+          dampingFactor={0.05}
+          target={[0, 1, 0]}
         />
 
-        {/* Add a ground plane */}
-        <mesh
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[0, -0.5, 0]}
-          receiveShadow
-        >
-          <planeGeometry args={[100, 100]} />
-          <meshStandardMaterial color="#f0f0f0" />
-        </mesh>
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[10, 20, 10]} intensity={1.2} castShadow />
+        <Environment preset="city" />
+
+        <ContactShadows
+          opacity={0.3}
+          scale={60}
+          blur={2.4}
+          far={10}
+          color="#000"
+        />
+        <gridHelper args={[100, 40, "#e2e8f0", "#f1f5f9"]} />
+
+        <group>
+          {/* Tractor (Cabin) positioned dynamically outside trailer front */}
+          <TractorUnit truckWidth={vehicle.width} truckDepth={vehicle.depth} />
+
+          {/* Trailer (Cargo Container) centered at 0,0,0 */}
+          <Trailer
+            width={vehicle.width}
+            height={vehicle.height}
+            depth={vehicle.depth}
+          />
+
+          {/* Items strictly within trailer bounds */}
+          {packedItems.map((item) => (
+            <ItemBox
+              key={item.boxId}
+              item={item}
+              truckW={vehicle.width}
+              truckH={vehicle.height}
+              truckD={vehicle.depth}
+            />
+          ))}
+        </group>
       </Canvas>
 
-      {/* Legend/Key
-      <div className="absolute bottom-4 right-4 bg-white p-3 rounded-lg shadow-lg">
-        <p className="text-sm font-medium mb-2">🎨 Color Legend</p>
-        <div className="space-y-1 text-xs">
-          <div className="flex items-center">
-            <div className="w-3 h-3 bg-gray-200 border mr-2"></div>
-            <span>Truck (wireframe)</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-3 h-3 bg-blue-500 mr-2"></div>
-            <div className="w-3 h-3 bg-green-500 mr-2"></div>
-            <div className="w-3 h-3 bg-yellow-500 mr-2"></div>
-            <div className="w-3 h-3 bg-red-500 mr-2"></div>
-            <div className="w-3 h-3 bg-purple-500 mr-2"></div>
-            <span>Boxes (by name)</span>
-          </div>
-        </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Each box type has a unique color based on its name
-        </p>
-      </div> */}
+      <div className="absolute bottom-6 left-6 flex items-center gap-2 text-[11px] font-bold text-slate-400 bg-white/80 px-4 py-2 rounded-full border border-slate-100 backdrop-blur-sm">
+        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+        SYSTEM READY: {packedItems.length} ITEMS PACKED
+      </div>
     </div>
   );
 }

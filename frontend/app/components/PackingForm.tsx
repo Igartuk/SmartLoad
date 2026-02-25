@@ -42,31 +42,34 @@ export default function PackingForm({
   const truckPresets = [
     {
       name: "Small Truck",
-      width: 50,
-      height: 40,
-      depth: 30,
-      maxPayload: 500,
+      templateType: "small",
+      width: 3000,
+      height: 2000,
+      depth: 1950,
+      maxPayload: 1500,
     },
     {
       name: "Medium Truck",
-      width: 100,
-      height: 80,
-      depth: 60,
-      maxPayload: 1000,
+      templateType: "medium",
+      width: 6000,
+      height: 2200,
+      depth: 2450,
+      maxPayload: 7000,
     },
     {
       name: "Large Truck",
-      width: 150,
-      height: 100,
-      depth: 80,
-      maxPayload: 2000,
+      templateType: "large",
+      width: 13600,
+      height: 2500,
+      depth: 2500,
+      maxPayload: 20000,
     },
   ];
 
   const applyTruckPreset = (preset: any) => {
     setVehicle({
       name: preset.name,
-      templateType: "preset",
+      templateType: preset.templateType,
       width: preset.width,
       height: preset.height,
       depth: preset.depth,
@@ -216,23 +219,25 @@ export default function PackingForm({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-400 mb-1">
                 Name
               </label>
               <input
+                readOnly
                 type="text"
                 name="name"
                 value={vehicle.name}
                 onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:ring-gray-400 bg-white text-gray-400"
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            {/*<div>
+               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Template Type
-              </label>
+              </label> 
               <input
+                
                 type="text"
                 name="templateType"
                 value={vehicle.templateType}
@@ -240,64 +245,68 @@ export default function PackingForm({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                 required
               />
-            </div>
+            </div>*/}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Width
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Width (mm)
               </label>
               <input
+                readOnly
                 type="number"
                 name="width"
                 value={vehicle.width}
                 onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:ring-gray-400 bg-white text-gray-400"
                 min="1"
-                step="0.1"
+                step="1"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Height
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Height (mm)
               </label>
               <input
+                readOnly
                 type="number"
                 name="height"
                 value={vehicle.height}
                 onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:ring-gray-400 bg-white text-gray-400"
                 min="1"
-                step="0.1"
+                step="1"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Depth
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Depth (mm)
               </label>
               <input
+                readOnly
                 type="number"
                 name="depth"
                 value={vehicle.depth}
                 onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:ring-gray-400 bg-white text-gray-400"
                 min="1"
-                step="0.1"
+                step="1"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Max Payload
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Max Payload (kg)
               </label>
               <input
+                readOnly
                 type="number"
                 name="maxPayload"
                 value={vehicle.maxPayload}
                 onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:ring-gray-400 bg-white text-gray-400"
                 min="1"
-                step="0.1"
+                step="1"
                 required
               />
             </div>
@@ -339,7 +348,7 @@ export default function PackingForm({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Width
+                    Width (mm)
                   </label>
                   <input
                     type="number"
@@ -354,14 +363,14 @@ export default function PackingForm({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Height
+                    Height (mm)
                   </label>
                   <input
                     type="number"
                     name="height"
                     value={box.height}
                     onChange={(e) => handleBoxChange(index, e)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                     min="0.1"
                     step="0.1"
                     required
@@ -369,14 +378,14 @@ export default function PackingForm({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Depth
+                    Depth (mm)
                   </label>
                   <input
                     type="number"
                     name="depth"
                     value={box.depth}
                     onChange={(e) => handleBoxChange(index, e)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                     min="0.1"
                     step="0.1"
                     required
@@ -384,14 +393,14 @@ export default function PackingForm({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Weight
+                    Weight (kg)
                   </label>
                   <input
                     type="number"
                     name="weight"
                     value={box.weight}
                     onChange={(e) => handleBoxChange(index, e)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                     min="0.1"
                     step="0.1"
                     required
@@ -406,7 +415,7 @@ export default function PackingForm({
                     name="quantity"
                     value={box.quantity}
                     onChange={(e) => handleBoxChange(index, e)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                     min="1"
                     step="1"
                     required

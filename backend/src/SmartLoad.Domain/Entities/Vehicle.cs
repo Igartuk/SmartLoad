@@ -19,9 +19,9 @@ namespace SmartLoad.Domain.Entities
             MaxPayload = maxPayload;
         }
 
-        public static Vehicle CreateSmall() => new("Small Van", VehicleType.Small, new Dimensions(1.7, 1.5, 2.4), 1000);
-        public static Vehicle CreateMedium() => new("7.5t Truck", VehicleType.Medium, new Dimensions(2.3, 2.2, 6.0), 3000);
-        public static Vehicle CreateLarge() => new("Standard Semi", VehicleType.Large, new Dimensions(2.45, 2.6, 13.6), 24000);
+        public static Vehicle CreateSmall() => new("Small Van", VehicleType.Small, new Dimensions(1950, 2000, 3000), 1500);
+        public static Vehicle CreateMedium() => new("7t Truck", VehicleType.Medium, new Dimensions(2450, 2200, 6000), 7000);
+        public static Vehicle CreateLarge() => new("Standard Semi", VehicleType.Large, new Dimensions(2500, 2500, 13600), 20000);
         public static Vehicle CreateCustom(string name, Dimensions dim, double maxPayload)
             => new(name, VehicleType.Custom, dim, maxPayload);
     }

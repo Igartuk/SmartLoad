@@ -39,7 +39,7 @@ export default function PackingResultDisplayCompact({
       </div>
 
       {/* Unpacked Items in compact form */}
-      {loadingPlan.unpackedItems.length > 0 && (
+      {/* {loadingPlan.unpackedItems.length > 0 && (
         <div className="space-y-1">
           <p className="text-sm font-medium text-gray-700 mb-1">
             Unpacked Boxes:
@@ -53,8 +53,7 @@ export default function PackingResultDisplayCompact({
               >
                 <span className="font-medium">{box.name}</span>
                 <span className="text-gray-600">
-                  {box.width.toFixed(1)}×{box.height.toFixed(1)}×
-                  {box.depth.toFixed(1)}
+                  {box.w.toFixed(1)}×{box.h.toFixed(1)}×{box.d.toFixed(1)} mm
                 </span>
               </div>
             ))}
@@ -64,7 +63,7 @@ export default function PackingResultDisplayCompact({
             </p>
           )}
         </div>
-      )}
+      )} */}
     </div>
   );
 }
