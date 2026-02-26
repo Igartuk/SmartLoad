@@ -1,11 +1,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY src/SmartLoad.Api/SmartLoad.Api.csproj src/SmartLoad.Api/
-RUN dotnet restore src/SmartLoad.Api/SmartLoad.Api.csproj
+COPY backend/src/SmartLoad.Api/SmartLoad.Api.csproj backend/src/SmartLoad.Api/
+RUN dotnet restore backend/src/SmartLoad.Api/SmartLoad.Api.csproj
 
 COPY . .
-RUN dotnet publish src/SmartLoad.Api/SmartLoad.Api.csproj -c Release -o /app/publish
+RUN dotnet publish backend/src/SmartLoad.Api/SmartLoad.Api.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
