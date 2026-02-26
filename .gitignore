@@ -393,8 +393,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files - ignore production and local secrets
+docker/.env
+.env.local
+.env.*.local
+
+# allow committing development and example files
+!docker/.env.development
+!docker/.env.example
 
 # vercel
 .vercel
@@ -404,3 +410,4 @@ yarn-error.log*
 next-env.d.ts
 
 frontend/.next/
+/docker/.env.development
