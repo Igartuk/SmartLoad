@@ -1,11 +1,27 @@
+using Microsoft.EntityFrameworkCore;
+using SmartLoad.Api.Endpoints;
+using SmartLoad.Application.Packing.Commands;
+using SmartLoad.Infrastructure.Persistence;
+using static SmartLoad.Infrastructure.DependencyInjection;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(CalculateLoadPlanCommand).Assembly));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowClient",
+        policy => policy
+            .WithOrigins("http://localhost:3000", "https://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
+});
 
 var app = builder.Build();
 
@@ -16,10 +32,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowClient");
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
-app.MapControllers();
-
+app.MapPackingEndpoints();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 app.Run();
