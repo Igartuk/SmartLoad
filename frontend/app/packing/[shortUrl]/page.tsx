@@ -11,9 +11,9 @@ export default function PackingResultPage() {
   const shortUrl = Array.isArray(params.shortUrl)
     ? params.shortUrl[0]
     : params.shortUrl;
-
-  const { plan, loading, error, initialData, updatePlan } =
-    usePackingPlan(shortUrl);
+  const { plan, loading, error, initialData, updatePlan } = usePackingPlan(
+    shortUrl!,
+  );
 
   const handleFormSubmit = async (data: any) => {
     try {

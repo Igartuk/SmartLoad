@@ -8,7 +8,7 @@ import {
 } from "@/app/services/api";
 import { parseOriginalRequest } from "../utils/packing-parser";
 
-export function usePackingPlan(shortUrl: string) {
+export function usePackingPlan(shortUrl?: string) {
   const [plan, setPlan] = useState<LoadingPlanResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export function usePackingPlan(shortUrl: string) {
   const fetchPlan = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getLoadingPlanByUrl(shortUrl);
+      const data = await getLoadingPlanByUrl(shortUrl!);
       setPlan(data);
 
       const parsed = parseOriginalRequest(data.originalRequest);
@@ -35,7 +35,7 @@ export function usePackingPlan(shortUrl: string) {
   const updatePlan = async (vehicle: Vehicle, boxes: any[]) => {
     setLoading(true);
     try {
-      const response = await updatePacking(shortUrl, { vehicle, boxes });
+      const response = await updatePacking(shortUrl!, { vehicle, boxes });
       setPlan(response.loadingPlan); // This triggers the 3D re-render
       return response;
     } catch (err) {
