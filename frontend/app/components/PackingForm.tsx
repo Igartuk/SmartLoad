@@ -153,16 +153,18 @@ export default function PackingForm({
   const getInputStyles = (readOnly: boolean) =>
     `w-full px-3 py-2 border rounded-md transition-colors focus:outline-none ${
       readOnly
-        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+        ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
         : "bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500"
     }`;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md border border-gray-100">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 bg-white rounded-lg shadow-md border border-gray-100">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Packing Config</h2>
-        <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
-          Dimensions in MM / KG
+        <h2 className="text-xl font-semibold text-gray-900">
+          Packing Configuration
+        </h2>
+        <div className="text-xs text-gray-500">
+          Dimensions in millimeters / kilograms
         </div>
       </div>
 
@@ -181,10 +183,10 @@ export default function PackingForm({
             className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
           >
             <div className="flex flex-col items-start">
-              <span className="text-sm font-bold text-blue-600 uppercase tracking-tight">
+              <span className="text-sm font-medium text-blue-600">
                 Vehicle Setup
               </span>
-              <span className="text-lg font-semibold text-gray-800">
+              <span className="text-lg font-semibold text-gray-900">
                 {vehicle.name}
               </span>
             </div>
@@ -198,7 +200,7 @@ export default function PackingForm({
           {!isVehicleCollapsed && (
             <div className="p-4 border-t border-gray-200 space-y-6 animate-in slide-in-from-top-2 duration-200">
               <div>
-                <p className="text-xs font-bold text-gray-500 mb-3 uppercase">
+                <p className="text-xs font-medium text-gray-500 mb-3">
                   Quick Presets
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -221,7 +223,7 @@ export default function PackingForm({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
                     Name
                   </label>
                   <input
@@ -236,7 +238,7 @@ export default function PackingForm({
                 </div>
                 {["width", "height", "depth", "maxPayload"].map((field) => (
                   <div key={field}>
-                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                    <label className="block text-xs font-medium text-gray-500 mb-1 capitalize">
                       {field.replace("max", "Max ")}
                     </label>
                     <input
@@ -258,7 +260,7 @@ export default function PackingForm({
         {/* --- BOXES SECTION --- */}
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-sm font-bold text-gray-500 uppercase">
+            <h3 className="text-sm font-medium text-gray-600">
               Cargo Items ({boxes.length})
             </h3>
           </div>
@@ -279,7 +281,7 @@ export default function PackingForm({
                   className="flex-1 flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-gray-800">
+                    <span className="text-sm font-medium text-gray-900">
                       {box.name}
                     </span>
                     <span className="text-xs text-gray-500">
@@ -306,7 +308,7 @@ export default function PackingForm({
               {expandedBoxIndex === index && (
                 <div className="p-4 border-t border-gray-100 bg-gray-50/50 grid grid-cols-2 md:grid-cols-3 gap-4 animate-in slide-in-from-top-1">
                   <div className="col-span-2 md:col-span-1">
-                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">
                       Label
                     </label>
                     <input
@@ -320,7 +322,7 @@ export default function PackingForm({
                   {["width", "height", "depth", "weight", "quantity"].map(
                     (f) => (
                       <div key={f}>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                        <label className="block text-xs font-medium text-gray-500 mb-1 capitalize">
                           {f}
                         </label>
                         <input
@@ -363,7 +365,7 @@ export default function PackingForm({
           <button
             type="button"
             onClick={addBox}
-            className="w-full py-3 border-2 border-dashed border-gray-200 text-gray-400 font-bold rounded-lg hover:border-blue-300 hover:text-blue-500 transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 border-2 border-dashed border-gray-200 text-gray-500 font-medium rounded-lg hover:border-blue-300 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
           >
             <span>+</span> Add Box Type
           </button>
@@ -374,9 +376,9 @@ export default function PackingForm({
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 bg-green-600 text-white font-black rounded-xl hover:bg-green-700 shadow-lg hover:shadow-green-200 disabled:opacity-50 transition-all uppercase tracking-widest"
+            className="w-full py-4 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 shadow-lg hover:shadow-green-200 disabled:opacity-50 transition-all"
           >
-            {isLoading ? "Optimizing Cargo..." : "Calculate Packing"}
+            {isLoading ? "Processing..." : "Calculate Packing"}
           </button>
         </div>
       </form>

@@ -48,7 +48,7 @@ export default function Home() {
       <div className="flex h-screen">
         {/* Form takes full width on initial page */}
         <div className="w-full bg-white shadow-lg overflow-y-auto p-6">
-          <h1 className="text-2xl font-bold mb-6 text-gray-800">
+          <h1 className="text-2xl font-semibold mb-6 text-gray-900">
             SmartLoad - Truck Packing Calculator
           </h1>
 

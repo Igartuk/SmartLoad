@@ -13,7 +13,7 @@ export default function PackingResultDisplayCompact({
 }: PackingResultDisplayCompactProps) {
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-800 mb-3">
+      <h2 className="text-xl font-semibold text-gray-900 mb-3">
         Packing Summary
       </h2>
       <div className="grid grid-cols-3 gap-3 text-center">

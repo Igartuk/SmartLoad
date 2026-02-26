@@ -50,7 +50,7 @@ export default function PackingResultPage() {
 
         <section className="flex-1 bg-white rounded-xl shadow-sm relative overflow-hidden">
           <div className="absolute top-4 left-4 z-10">
-            <h2 className="text-lg font-bold text-slate-800">
+            <h2 className="text-xl font-semibold text-slate-900">
               3D Cargo Layout
             </h2>
             <p className="text-xs text-slate-500">
