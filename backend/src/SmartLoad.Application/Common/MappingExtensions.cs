@@ -34,6 +34,8 @@ namespace SmartLoad.Application.Common
                 plan.Url ?? string.Empty,
                 plan.TotalVolumeUtilization,
                 new VehicleDto(
+                    plan.Vehicle.Name,
+                    plan.Vehicle.Type.ToString(),
                     plan.Vehicle.InnerDimensions.Width,
                     plan.Vehicle.InnerDimensions.Height,
                     plan.Vehicle.InnerDimensions.Depth

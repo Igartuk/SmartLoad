@@ -32,7 +32,7 @@ namespace SmartLoad.Application.Packing.Commands
         {
             // Get the existing load plan by URL
             var existingPlan = await _repository.GetByUrlAsync(request.Url);
-
+            
             // Create new vehicle based on request
             var vehicle = request.Vehicle.TemplateType?.ToLower() switch
             {
@@ -65,7 +65,7 @@ namespace SmartLoad.Application.Packing.Commands
             // Clear existing items and add recalculated ones
             existingPlan.PackedItems.Clear();
             existingPlan.UnpackedItems.Clear();
-
+            existingPlan.SetVehicle(vehicle);
             foreach (var item in recalculatedPlan.PackedItems)
             {
                 existingPlan.AddPackedItem(item);

@@ -3,6 +3,41 @@
 import { useState } from "react";
 import { calculatePacking } from "../services/api";
 
+const TRUCK_PRESETS = [
+  {
+    name: "Small Truck",
+    templateType: "small",
+    width: 1950,
+    height: 2000,
+    depth: 3000,
+    maxPayload: 1500,
+  },
+  {
+    name: "Medium Truck",
+    templateType: "medium",
+    width: 2450,
+    height: 2200,
+    depth: 6000,
+    maxPayload: 7000,
+  },
+  {
+    name: "Large Truck",
+    templateType: "large",
+    width: 2500,
+    height: 2500,
+    depth: 13600,
+    maxPayload: 20000,
+  },
+  {
+    name: "Custom Truck",
+    templateType: "custom",
+    width: 1950,
+    height: 2000,
+    depth: 4000,
+    maxPayload: 2000,
+  },
+];
+
 export default function PackingForm({
   onResult,
   initialVehicle,
@@ -10,73 +45,14 @@ export default function PackingForm({
   shouldCallApi = true,
 }: {
   onResult: (result: any) => void;
-  initialVehicle?: {
-    name: string;
-    templateType: string;
-    width: number;
-    height: number;
-    depth: number;
-    maxPayload: number;
-  };
-  initialBoxes?: {
-    name: string;
-    width: number;
-    height: number;
-    depth: number;
-    weight: number;
-    quantity: number;
-    isStackable: boolean;
-    isFragile: boolean;
-  }[];
+  initialVehicle?: any;
+  initialBoxes?: any[];
   shouldCallApi?: boolean;
 }) {
-  const [vehicle, setVehicle] = useState({
-    name: initialVehicle?.name || "Truck",
-    templateType: initialVehicle?.templateType || "custom",
-    width: initialVehicle?.width || 100,
-    height: initialVehicle?.height || 100,
-    depth: initialVehicle?.depth || 100,
-    maxPayload: initialVehicle?.maxPayload || 1000,
-  });
+  const defaultVehicle =
+    initialVehicle || TRUCK_PRESETS.find((p) => p.templateType === "custom");
 
-  const truckPresets = [
-    {
-      name: "Small Truck",
-      templateType: "small",
-      width: 3000,
-      height: 2000,
-      depth: 1950,
-      maxPayload: 1500,
-    },
-    {
-      name: "Medium Truck",
-      templateType: "medium",
-      width: 6000,
-      height: 2200,
-      depth: 2450,
-      maxPayload: 7000,
-    },
-    {
-      name: "Large Truck",
-      templateType: "large",
-      width: 13600,
-      height: 2500,
-      depth: 2500,
-      maxPayload: 20000,
-    },
-  ];
-
-  const applyTruckPreset = (preset: any) => {
-    setVehicle({
-      name: preset.name,
-      templateType: preset.templateType,
-      width: preset.width,
-      height: preset.height,
-      depth: preset.depth,
-      maxPayload: preset.maxPayload,
-    });
-  };
-
+  const [vehicle, setVehicle] = useState(defaultVehicle);
   const [boxes, setBoxes] = useState(
     initialBoxes && initialBoxes.length > 0
       ? initialBoxes
@@ -94,39 +70,34 @@ export default function PackingForm({
         ],
   );
 
+  // --- COLLAPSE STATE ---
+  const [isVehicleCollapsed, setIsVehicleCollapsed] = useState(true);
+  const [expandedBoxIndex, setExpandedBoxIndex] = useState<number | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isReadOnly = vehicle.templateType !== "custom";
+
   const handleVehicleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setVehicle((prev) => ({
+    setVehicle((prev: any) => ({
       ...prev,
-      [name]:
-        name === "width" ||
-        name === "height" ||
-        name === "depth" ||
-        name === "maxPayload"
-          ? parseFloat(value) || 0
-          : value,
+      [name]: ["width", "height", "depth", "maxPayload"].includes(name)
+        ? parseFloat(value) || 0
+        : value,
     }));
   };
 
-  const handleBoxChange = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value, type } = e.target;
+  const handleBoxChange = (index: number, e: any) => {
+    const { name, value, type, checked } = e.target;
     const newBoxes = [...boxes];
     newBoxes[index] = {
       ...newBoxes[index],
       [name]:
         type === "checkbox"
-          ? (e.target as HTMLInputElement).checked
-          : name === "width" ||
-              name === "height" ||
-              name === "depth" ||
-              name === "weight" ||
-              name === "quantity"
+          ? checked
+          : ["width", "height", "depth", "weight", "quantity"].includes(name)
             ? parseFloat(value) || 0
             : value,
     };
@@ -134,10 +105,11 @@ export default function PackingForm({
   };
 
   const addBox = () => {
+    const nextIndex = boxes.length;
     setBoxes([
       ...boxes,
       {
-        name: `Box ${boxes.length + 1}`,
+        name: `Box ${nextIndex + 1}`,
         width: 10,
         height: 10,
         depth: 10,
@@ -147,13 +119,13 @@ export default function PackingForm({
         isFragile: false,
       },
     ]);
+    setExpandedBoxIndex(nextIndex); // Auto-expand new box
   };
 
   const removeBox = (index: number) => {
     if (boxes.length > 1) {
-      const newBoxes = [...boxes];
-      newBoxes.splice(index, 1);
-      setBoxes(newBoxes);
+      setBoxes(boxes.filter((_, i) => i !== index));
+      if (expandedBoxIndex === index) setExpandedBoxIndex(null);
     }
   };
 
@@ -161,325 +133,250 @@ export default function PackingForm({
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-
     try {
+      const data = { vehicle, boxes };
       if (shouldCallApi) {
-        const result = await calculatePacking({ vehicle, boxes });
-        onResult({ result, vehicle, boxes });
+        const result = await calculatePacking(data);
+        onResult({ result, ...data });
       } else {
-        // Just pass the form data to parent component without calling API
-        onResult({ vehicle, boxes });
+        onResult(data);
       }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to calculate packing",
       );
-      console.error("Error:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const getInputStyles = (readOnly: boolean) =>
+    `w-full px-3 py-2 border rounded-md transition-colors focus:outline-none ${
+      readOnly
+        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+        : "bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500"
+    }`;
+
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
-        Truck Packing Calculator
-      </h2>
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md border border-gray-100">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Packing Config</h2>
+        <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
+          Dimensions in MM / KG
+        </div>
+      </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
+        <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
           Error: {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Vehicle Section */}
-        <div className="border border-gray-200 rounded-lg p-6">
-          <h3 className="text-xl font-semibold mb-4 text-gray-700">
-            Vehicle Dimensions
-          </h3>
-
-          {/* Truck Presets */}
-          <div className="mb-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">
-              Quick Select:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {truckPresets.map((preset, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => applyTruckPreset(preset)}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {preset.name}
-                </button>
-              ))}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* --- VEHICLE SECTION --- */}
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsVehicleCollapsed(!isVehicleCollapsed)}
+            className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+          >
+            <div className="flex flex-col items-start">
+              <span className="text-sm font-bold text-blue-600 uppercase tracking-tight">
+                Vehicle Setup
+              </span>
+              <span className="text-lg font-semibold text-gray-800">
+                {vehicle.name}
+              </span>
             </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
-                Name
-              </label>
-              <input
-                readOnly
-                type="text"
-                name="name"
-                value={vehicle.name}
-                onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:ring-gray-400 bg-white text-gray-400"
-                required
-              />
-            </div>
-            {/*<div>
-               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Template Type
-              </label> 
-              <input
-                
-                type="text"
-                name="templateType"
-                value={vehicle.templateType}
-                onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                required
-              />
-            </div>*/}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Width (mm)
-              </label>
-              <input
-                readOnly
-                type="number"
-                name="width"
-                value={vehicle.width}
-                onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:ring-gray-400 bg-white text-gray-400"
-                min="1"
-                step="1"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Height (mm)
-              </label>
-              <input
-                readOnly
-                type="number"
-                name="height"
-                value={vehicle.height}
-                onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:ring-gray-400 bg-white text-gray-400"
-                min="1"
-                step="1"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Depth (mm)
-              </label>
-              <input
-                readOnly
-                type="number"
-                name="depth"
-                value={vehicle.depth}
-                onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:ring-gray-400 bg-white text-gray-400"
-                min="1"
-                step="1"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Max Payload (kg)
-              </label>
-              <input
-                readOnly
-                type="number"
-                name="maxPayload"
-                value={vehicle.maxPayload}
-                onChange={handleVehicleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-0 focus:ring-gray-400 bg-white text-gray-400"
-                min="1"
-                step="1"
-                required
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Boxes Section */}
-        <div className="border border-gray-200 rounded-lg p-6">
-          <h3 className="text-xl font-semibold mb-4 text-gray-700">Boxes</h3>
-          {boxes.map((box, index) => (
-            <div
-              key={index}
-              className="mb-6 p-4 border border-gray-100 rounded-lg relative"
+            <span
+              className={`transform transition-transform ${isVehicleCollapsed ? "" : "rotate-180"}`}
             >
-              <button
-                type="button"
-                onClick={() => removeBox(index)}
-                className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xl"
-                disabled={boxes.length <= 1}
-              >
-                ×
-              </button>
-              <h4 className="font-medium mb-3 text-gray-600">
-                Box {index + 1}
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+              ▼
+            </span>
+          </button>
+
+          {!isVehicleCollapsed && (
+            <div className="p-4 border-t border-gray-200 space-y-6 animate-in slide-in-from-top-2 duration-200">
+              <div>
+                <p className="text-xs font-bold text-gray-500 mb-3 uppercase">
+                  Quick Presets
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {TRUCK_PRESETS.map((preset) => (
+                    <button
+                      key={preset.templateType}
+                      type="button"
+                      onClick={() => setVehicle(preset)}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        vehicle.templateType === preset.templateType
+                          ? "bg-blue-600 text-white shadow-md"
+                          : "bg-white border border-gray-300 text-gray-700 hover:border-blue-400"
+                      }`}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
                     Name
                   </label>
                   <input
                     type="text"
                     name="name"
-                    value={box.name}
-                    onChange={(e) => handleBoxChange(index, e)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                    value={vehicle.name}
+                    onChange={handleVehicleChange}
+                    readOnly={isReadOnly}
+                    className={getInputStyles(isReadOnly)}
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Width (mm)
-                  </label>
-                  <input
-                    type="number"
-                    name="width"
-                    value={box.width}
-                    onChange={(e) => handleBoxChange(index, e)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                    min="0.1"
-                    step="0.1"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Height (mm)
-                  </label>
-                  <input
-                    type="number"
-                    name="height"
-                    value={box.height}
-                    onChange={(e) => handleBoxChange(index, e)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                    min="0.1"
-                    step="0.1"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Depth (mm)
-                  </label>
-                  <input
-                    type="number"
-                    name="depth"
-                    value={box.depth}
-                    onChange={(e) => handleBoxChange(index, e)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                    min="0.1"
-                    step="0.1"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Weight (kg)
-                  </label>
-                  <input
-                    type="number"
-                    name="weight"
-                    value={box.weight}
-                    onChange={(e) => handleBoxChange(index, e)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                    min="0.1"
-                    step="0.1"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    value={box.quantity}
-                    onChange={(e) => handleBoxChange(index, e)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                    min="1"
-                    step="1"
-                    required
-                  />
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="isStackable"
-                    checked={box.isStackable}
-                    onChange={(e) => handleBoxChange(index, e)}
-                    className="mr-2"
-                    id={`stackable-${index}`}
-                  />
-                  <label
-                    htmlFor={`stackable-${index}`}
-                    className="text-sm text-gray-700"
-                  >
-                    Stackable
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="isFragile"
-                    checked={box.isFragile}
-                    onChange={(e) => handleBoxChange(index, e)}
-                    className="mr-2"
-                    id={`fragile-${index}`}
-                  />
-                  <label
-                    htmlFor={`fragile-${index}`}
-                    className="text-sm text-gray-700"
-                  >
-                    Fragile
-                  </label>
-                </div>
+                {["width", "height", "depth", "maxPayload"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                      {field.replace("max", "Max ")}
+                    </label>
+                    <input
+                      type="number"
+                      name={field}
+                      value={vehicle[field]}
+                      onChange={handleVehicleChange}
+                      readOnly={isReadOnly}
+                      className={getInputStyles(isReadOnly)}
+                      required
+                    />
+                  </div>
+                ))}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* --- BOXES SECTION --- */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-sm font-bold text-gray-500 uppercase">
+              Cargo Items ({boxes.length})
+            </h3>
+          </div>
+
+          {boxes.map((box, index) => (
+            <div
+              key={index}
+              className="border border-gray-200 rounded-lg overflow-hidden"
+            >
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedBoxIndex(
+                      expandedBoxIndex === index ? null : index,
+                    )
+                  }
+                  className="flex-1 flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-gray-800">
+                      {box.name}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {box.width}x{box.height}x{box.depth}mm • {box.quantity}{" "}
+                      units
+                    </span>
+                  </div>
+                  <span
+                    className={`text-gray-400 transform transition-transform ${expandedBoxIndex === index ? "rotate-180" : ""}`}
+                  >
+                    ▼
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeBox(index)}
+                  className="p-4 text-gray-300 hover:text-red-500 transition-colors border-l border-gray-100"
+                  disabled={boxes.length <= 1}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {expandedBoxIndex === index && (
+                <div className="p-4 border-t border-gray-100 bg-gray-50/50 grid grid-cols-2 md:grid-cols-3 gap-4 animate-in slide-in-from-top-1">
+                  <div className="col-span-2 md:col-span-1">
+                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                      Label
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={box.name}
+                      onChange={(e) => handleBoxChange(index, e)}
+                      className={getInputStyles(false)}
+                    />
+                  </div>
+                  {["width", "height", "depth", "weight", "quantity"].map(
+                    (f) => (
+                      <div key={f}>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                          {f}
+                        </label>
+                        <input
+                          type="number"
+                          name={f}
+                          value={box[f]}
+                          onChange={(e) => handleBoxChange(index, e)}
+                          className={getInputStyles(false)}
+                        />
+                      </div>
+                    ),
+                  )}
+                  <div className="flex gap-4 col-span-2 md:col-span-3 pt-2">
+                    <label className="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="isStackable"
+                        checked={box.isStackable}
+                        onChange={(e) => handleBoxChange(index, e)}
+                        className="w-4 h-4 rounded text-blue-600 mr-2"
+                      />
+                      Stackable
+                    </label>
+                    <label className="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="isFragile"
+                        checked={box.isFragile}
+                        onChange={(e) => handleBoxChange(index, e)}
+                        className="w-4 h-4 rounded text-red-600 mr-2"
+                      />
+                      Fragile
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
 
           <button
             type="button"
             onClick={addBox}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="w-full py-3 border-2 border-dashed border-gray-200 text-gray-400 font-bold rounded-lg hover:border-blue-300 hover:text-blue-500 transition-all flex items-center justify-center gap-2"
           >
-            Add Another Box
+            <span>+</span> Add Box Type
           </button>
         </div>
 
-        <div className="flex justify-center">
+        {/* --- SUBMIT --- */}
+        <div className="pt-6">
           <button
             type="submit"
             disabled={isLoading}
-            className="px-8 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-green-600 text-white font-black rounded-xl hover:bg-green-700 shadow-lg hover:shadow-green-200 disabled:opacity-50 transition-all uppercase tracking-widest"
           >
-            {isLoading ? (
-              <>
-                <span className="mr-2">Calculating...</span>
-                <span className="animate-spin">🌀</span>
-              </>
-            ) : (
-              "Calculate Packing"
-            )}
+            {isLoading ? "Optimizing Cargo..." : "Calculate Packing"}
           </button>
         </div>
       </form>

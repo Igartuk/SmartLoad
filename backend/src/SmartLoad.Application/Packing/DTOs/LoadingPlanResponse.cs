@@ -14,6 +14,8 @@ namespace SmartLoad.Application.Packing.DTOs
     );
 
     public record VehicleDto(
+        string Name,
+        string TemplateType,
         double Width,
         double Height,
         double Depth
