@@ -16,7 +16,11 @@ builder.Services.AddSwaggerGen();
 
 // Read CORS origins from configuration
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
-
+Console.WriteLine("Allowed origins:");
+foreach (var o in allowedOrigins)
+{
+    Console.WriteLine(o);
+}
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowClient",
@@ -36,9 +40,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowClient");
 app.UseHttpsRedirection();
 
+app.UseCors("AllowClient");
 app.MapPackingEndpoints();
 using (var scope = app.Services.CreateScope())
 {
