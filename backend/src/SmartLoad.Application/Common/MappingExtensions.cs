@@ -14,6 +14,7 @@ namespace SmartLoad.Application.Common
         {
             return new LoadPlanResponse(
                 plan.Id,
+                plan.Url,
                 plan.TotalVolumeUtilization,
                 plan.PackedItems.Select(pi => new PackedItemDto(
                     pi.BoxId,

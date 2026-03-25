@@ -5,7 +5,7 @@ namespace SmartLoad.Application.Packing.Commands
 {
     public record UpdatePackingCommand(
         string Url,
-        VehicleRequest Vehicle,
+        VehicleRequest? Vehicle,
         List<BoxRequest> Boxes
     ) : IRequest<LoadingPlanResponse>;
 }

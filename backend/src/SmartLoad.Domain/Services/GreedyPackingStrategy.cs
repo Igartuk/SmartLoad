@@ -38,6 +38,31 @@ namespace SmartLoad.Domain.Services
             return plan;
         }
 
+        public LoadPlan CalculateBestFit(IEnumerable<Vehicle> candidates, List<Box> boxes)
+        {
+            var totalWeight = boxes.Sum(b => b.Weight);
+            LoadPlan? bestPlan = null;
+
+            foreach (var vehicle in candidates)
+            {
+                if (totalWeight > vehicle.MaxPayload)
+                    continue;
+
+                var currentPlan = Calculate(vehicle, boxes);
+
+                if (currentPlan.UnpackedItems.Count == 0)
+                {
+                    return currentPlan;
+                }
+
+                if (bestPlan == null || currentPlan.PackedItems.Count > bestPlan.PackedItems.Count)
+                {
+                    bestPlan = currentPlan;
+                }
+            }
+
+            return bestPlan ?? new LoadPlan(candidates.First());
+        }
         private bool TryPlace(Box box, LoadPlan plan, out PackedItem? result)
         {
             var truck = plan.Vehicle.InnerDimensions;

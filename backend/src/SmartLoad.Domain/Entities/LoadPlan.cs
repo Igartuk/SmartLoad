@@ -26,6 +26,17 @@ namespace SmartLoad.Domain.Entities
         public void SetUrl(string url) => Url = url;
         public void SetOriginalRequest(string request) => OriginalRequest = request;
         public void SetVehicle(Vehicle vehicle) => Vehicle = vehicle;
-        
+        public void UpdateFrom(LoadPlan newPlan, string originalRequestJson)
+        {
+            Vehicle = newPlan.Vehicle;
+            OriginalRequest = originalRequestJson;
+
+            PackedItems.Clear();
+            UnpackedItems.Clear();
+
+            foreach (var item in newPlan.PackedItems) AddPackedItem(item);
+            foreach (var box in newPlan.UnpackedItems) AddUnpackedItem(box);
+        }
+
     }
 }

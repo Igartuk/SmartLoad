@@ -10,5 +10,6 @@ namespace SmartLoad.Domain.Services
     public interface IPackingStrategy
     {
         LoadPlan Calculate(Vehicle vehicle, List<Box> boxes);
+        LoadPlan CalculateBestFit(IEnumerable<Vehicle> candidates, List<Box> boxes);
     }
 }

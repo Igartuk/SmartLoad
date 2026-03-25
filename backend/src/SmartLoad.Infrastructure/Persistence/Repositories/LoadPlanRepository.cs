@@ -9,7 +9,7 @@ namespace SmartLoad.Infrastructure.Persistence.Repositories
         public async Task<LoadPlan> GetByIdAsync(Guid id)
         {
             var plan = await context.LoadPlans
-                .AsNoTracking() // Performance boost for read-only 3D rendering
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             return plan ?? throw new KeyNotFoundException($"LoadPlan {id} not found.");
@@ -21,7 +21,7 @@ namespace SmartLoad.Infrastructure.Persistence.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Url == url);
 
-            return plan ?? throw new KeyNotFoundException($"LoadPlan with short URL {url} not found.");
+            return plan ?? throw new KeyNotFoundException($"LoadPlan with URL {url} not found.");
         }
 
         public async Task SaveAsync(LoadPlan plan)

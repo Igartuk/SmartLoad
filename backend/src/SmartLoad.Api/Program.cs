@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SmartLoad.Api.Endpoints;
+using SmartLoad.Api.Filters;
+using SmartLoad.Api.Middlewares;
 using SmartLoad.Application.Packing.Commands;
 using SmartLoad.Infrastructure.Persistence;
 using static SmartLoad.Infrastructure.DependencyInjection;
@@ -10,6 +12,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(CalculateLoadPlanCommand).Assembly));
+builder.Services.AddScoped<RequestLoggingFilter>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -39,6 +42,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 

@@ -1,7 +1,8 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using SmartLoad.Application.Interfaces;
+using SmartLoad.Api.Filters;
 using SmartLoad.Application.Common;
+using SmartLoad.Application.Interfaces;
 using SmartLoad.Application.Packing.Commands;
 using SmartLoad.Application.Packing.DTOs;
 using SmartLoad.Application.Services;
@@ -12,90 +13,41 @@ namespace SmartLoad.Api.Endpoints
     {
         public static void MapPackingEndpoints(this IEndpointRouteBuilder app)
         {
-            var group = app.MapGroup("/api/packing");
+            var group = app.MapGroup("/api/packing")
+                           .AddEndpointFilter<RequestLoggingFilter>()
+                           .WithOpenApi();
 
             // POST: Trigger calculation
             group.MapPost("/", async (CalculateLoadPlanCommand command, IMediator mediator, UrlShortenerService urlShortener) =>
             {
-                try
-                {
-                    var result = await mediator.Send(command);
-                    var shortUrl = urlShortener.GenerateUrlFromGuid(result.Id);
-
-                    var packingResult = new PackingResultSimple(
-                        true,
-                        $"/packing/{shortUrl}"
-                    );
-
-                    return Results.Ok(packingResult);
-                }
-                catch (Exception ex)
-                {
-                    return Results.Ok(new PackingResultSimple(false, ""));
-                }
+                var result = await mediator.Send(command);
+                var path = $"/packing/{result.Url}";
+                return Results.Created(path, new PackingResultSimple(true, path));
             })
-            .WithName("CalculatePacking")
-            .WithOpenApi();
+            .WithName("CalculatePacking");
 
-            // GET: Retrieve loading plan by short URL for frontend visualization
+            // GET: Retrieve loading plan
             group.MapGet("/{url}", async (string url, ILoadPlanRepository repository) =>
             {
-                try
-                {
-                    var plan = await repository.GetByUrlAsync(url);
-                    return Results.Ok(plan.ToLoadingPlanResponse());
-                }
-                catch (KeyNotFoundException)
-                {
-                    return Results.NotFound();
-                }
+                var plan = await repository.GetByUrlAsync(url);
+                return plan is not null
+                    ? Results.Ok(plan.ToLoadingPlanResponse())
+                    : Results.NotFound();
             })
-            .WithName("GetLoadingPlanByUrl")
-            .WithOpenApi();
+            .WithName("GetLoadingPlanByUrl");
 
-            // PUT: Recalculate packing plan (update existing)
+            // PUT: Recalculate packing plan
             group.MapPut("/{url}", async (string url, UpdatePackingCommand command, IMediator mediator) =>
             {
-                try
-                {
-                    // Set the short URL on the command
-                    var updatedCommand = command with { Url = url };
-                    var result = await mediator.Send(updatedCommand);
+                var result = await mediator.Send(command with { Url = url });
 
-                    // Return the updated loading plan directly
-                    return Results.Ok(new PackingResultWithPlan(
-                        true,
-                        $"/packing/{url}",
-                        result
-                    ));
-                }
-                catch (KeyNotFoundException)
-                {
-                    return Results.NotFound();
-                }
-                catch (Exception ex)
-                {
-                    return Results.Ok(new PackingResultSimple(false, $"/packing/{url}"));
-                }
+                return Results.Ok(new PackingResultWithPlan(
+                    true,
+                    $"/packing/{url}",
+                    result
+                ));
             })
-            .WithName("UpdatePacking")
-            .WithOpenApi();
-
-            // GET: Retrieve result by ID (backward compatibility)
-            // group.MapGet("/{id:guid}", async (Guid id, ILoadPlanRepository repository) =>
-            // {
-            //     try
-            //     {
-            //         var plan = await repository.GetByIdAsync(id);
-            //         return Results.Ok(plan.ToResponse());
-            //     }
-            //     catch (KeyNotFoundException)
-            //     {
-            //         return Results.NotFound();
-            //     }
-            // })
-            // .WithName("GetPackingResult")
-            // .WithOpenApi();
+            .WithName("UpdatePacking");
         }
     }
 }

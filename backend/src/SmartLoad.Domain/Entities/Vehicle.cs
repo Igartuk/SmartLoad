@@ -24,5 +24,11 @@ namespace SmartLoad.Domain.Entities
         public static Vehicle CreateLarge() => new("Standard Semi", VehicleType.Large, new Dimensions(2500, 2500, 13600), 20000);
         public static Vehicle CreateCustom(string name, Dimensions dim, double maxPayload)
             => new(name, VehicleType.Custom, dim, maxPayload);
+        public static IEnumerable<Vehicle> GetStandardTemplates() => new List<Vehicle>
+        {
+            CreateSmall(),
+            CreateMedium(),
+            CreateLarge()
+        }.OrderBy(v => v.InnerDimensions.Volume);
     }
 }

@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace SmartLoad.Application.Packing.DTOs
 {
-    public record PackedItemDto(Guid BoxId, string Name, double X, double Y, double Z, double W, double H, double D, string Rotation);
+    public record PackedItemDto(Guid Id, string Name, double X, double Y, double Z, double Width, double Height, double Depth, string Rotation);
 }
